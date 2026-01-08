@@ -1,14 +1,16 @@
 import subprocess
 import time
+from typing import Optional, List, Dict, Any
+from .core import Hyprctl
 
 class BackgroundManager:
-    def __init__(self, hyprctl, workspace=2):
+    def __init__(self, hyprctl: Hyprctl, workspace: int = 2):
         self.hyprctl = hyprctl
         self.workspace = workspace
-        self.process = None
-        self.address = None
+        self.process: Optional[subprocess.Popen] = None
+        self.address: Optional[str] = None
 
-    def set(self, image_path=None, color=None):
+    def set(self, image_path: Optional[str] = None, color: Optional[str] = None) -> None:
         print(f"Spawning background window...")
         
         # Using a distinct class for the background to ensure we can rule-match it easily if needed
@@ -60,12 +62,12 @@ class BackgroundManager:
         
         # Find it
         # We might need to retry finding it if it spawns slowly
-        clients = []
+        clients: List[Dict[str, Any]] = []
         for attempt in range(10):
             clients = self.hyprctl.get_clients()
             for client in clients:
                 if bg_class in client.get('class', ''):
-                    if client['workspace']['id'] == self.workspace:
+                    if client.get('workspace', {}).get('id') == self.workspace:
                         self.address = client['address']
                         break
             if self.address:
@@ -120,7 +122,7 @@ class BackgroundManager:
             # Re-apply z-order push just in case
             self.hyprctl.dispatch(f"alterzorder bottom,address:{self.address}")
             
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.process:
             self.process.terminate()
         if self.address:

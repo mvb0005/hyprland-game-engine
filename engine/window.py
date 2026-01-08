@@ -1,21 +1,23 @@
 import subprocess
 import time
+from typing import List, Dict, Any, Optional
+from .core import Hyprctl
 
 class WindowManager:
-    def __init__(self, hyprctl, workspace=2):
+    def __init__(self, hyprctl: Hyprctl, workspace: int = 2):
         self.hyprctl = hyprctl
         self.workspace = workspace
-        self.windows = []
-        self.processes = []
+        self.windows: List[Dict[str, Any]] = []
+        self.processes: List[subprocess.Popen] = []
 
-    def spawn_batch(self, windows_config):
+    def spawn_batch(self, windows_config: List[Dict[str, Any]]) -> None:
         """
         Spawn multiple windows at once using hyprctl batching with exec rules.
         windows_config: List of dicts with keys: command, name_pattern, x, y, width, height, is_class
         """
         print(f"Batch spawning {len(windows_config)} windows...")
         
-        batch_cmds = []
+        # batch_cmds = []
         import os
         conf_path = os.path.expanduser("~/code/games/ghostty_game.conf")
 
@@ -39,7 +41,6 @@ class WindowManager:
             
             # Construct dispatch command
             # Hyprland exec syntax: dispatch exec [rules] command
-            # batch_cmds.append(f"dispatch exec [{rule_str}] {cmd}")
             
             # We cannot use hyprctl --batch here because the rules inside [] use semicolons
             # which conflict with the batch separator.
@@ -51,12 +52,9 @@ class WindowManager:
             print(f"Dispatching: {full_cmd}")
             self.hyprctl.dispatch(full_cmd)
             
-        # print("Launching windows via batch exec...")
-        # self.hyprctl.batch(batch_cmds)
-
         # 3. Wait for ALL windows (Polling)
         # We need the addresses to manage them later (close, etc)
-        found_windows = {} # index -> address
+        found_windows: Dict[int, str] = {} # index -> address
         retries = 50
         while retries > 0 and len(found_windows) < len(windows_config):
             clients = self.hyprctl.get_clients()
@@ -95,7 +93,7 @@ class WindowManager:
         if len(found_windows) < len(windows_config):
             print(f"Warning: Only found {len(found_windows)}/{len(windows_config)} windows.")
 
-    def spawn(self, command, name_pattern, x, y, width, height, is_class=True):
+    def spawn(self, command: str, name_pattern: str, x: int, y: int, width: int, height: int, is_class: bool = True) -> Optional[Dict[str, Any]]:
         """
         Spawn a single window using exec rules.
         """
@@ -114,7 +112,7 @@ class WindowManager:
             return self.windows[-1]
         return None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         print("Cleaning up windows...")
         # Since we don't have procs, we rely entirely on Hyprland closewindow
         # batching the closes for speed
@@ -127,7 +125,7 @@ class WindowManager:
         self.windows = []
         self.processes = []
 
-    def close_matching(self, patterns):
+    def close_matching(self, patterns: List[str]) -> None:
         """
         Close any window (owned or not) that matches the given patterns.
         Useful for cleaning up leftovers from previous sessions.
