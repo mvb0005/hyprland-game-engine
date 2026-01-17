@@ -33,9 +33,20 @@ Instead of rendering pixels to a canvas, this engine orchestrates **native Wayla
 *   `docs/`: Documentation (DESIGN, STANDARDS, etc).
 
 ## Usage
+
+### Boggle
 Run the Boggle demo:
 ```bash
 python boggle/boggle_game.py
 ```
+
+### Lexigraph (TUI)
+Run the Lexigraph server and TUI:
+```bash
+python lexigraph_py/tui.py
+```
+1.  The TUI will launch in your terminal showing the grid.
+2.  Connect to `http://<your-ip>:3000` on your phone to join as a player.
+3.  Swipe words on your phone to see them appear on the TUI!
 1.  Connect via mobile/browser to `http://localhost:5000/controller`.
 2.  Press **Start Game**.
