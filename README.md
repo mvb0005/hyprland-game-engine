@@ -9,30 +9,33 @@ Instead of rendering pixels to a canvas, this engine orchestrates **native Wayla
 *   **Immersion**: A "Fake Background" layer hides the desktop, creating a dedicated game space.
 
 ## Features
-*   **Atomic Spawning**: Uses `hyprctl dispatch exec [rules]` to spawn windows instantly in their correct floating position/size, eliminating visual "tiling" glitches.
-*   **Batch Processing**: Spawns dozens of windows simultaneously with minimal IPC overhead.
-*   **Custom Backgrounds**: Spawns a dedicated, wallpaper-covering background layer (using `imv`) that sits behind game windows but covers the workspace.
+*   **Atomic Spawning**: Uses `hyprctl dispatch exec [rules]` to spawn windows instantly.
+*   **Python-based Game Logic**: 
+    - Full **Boggle Board Generator** ported from Rust (Snake embedding algorithm).
+    - **SVG-based Rendering** for high-performance, scalable board displays.
+*   **Custom Backgrounds**: Spawns a dedicated, wallpaper-covering background layer.
 *   **Robust Cleanup**: `clean_slate` functionality ensures no orphaned windows are left behind.
 
 ## Requirements
 *   **Hyprland**: The compositor.
-*   **Python 3**: The orchestration logic.
-*   **Ghostty**: The terminal emulator used for game windows (fast, GPU-accelerated).
-*   **IMV**: Image viewer used for the background layer.
-*   **ImageMagick**: Used to generate solid color backgrounds on the fly.
+*   **Python 3**: The orchestration logic (Flask, etc).
+*   **Ghostty / Chromium**: Recommended for windows.
 
 ## Project Structure
+*   `specs/`: System specifications.
 *   `engine/`: The core Python package.
-    *   `core.py`: Low-level Hyprland IPC.
-    *   `window.py`: Window lifecycle management (spawn, move, resize, close).
-    *   `background.py`: Manages the background layer.
-*   `demo_boggle.py`: The main proof-of-concept game layout.
-*   `ghostty_game.conf`: Minimal Ghostty configuration for "game-like" terminals.
+*   `boggle/`: The Boggle game implementation.
+    -   `boggle_game.py`: Main entry point (Orchestrator).
+    -   `server.py`: Flask server handling state & UI.
+    -   `game_state.py`: Core logic (Generator, Scoring).
+*   `scripts/`: Utility scripts and development tools.
+*   `tests/`: Unit and integration tests.
+*   `docs/`: Documentation (DESIGN, STANDARDS, etc).
 
 ## Usage
 Run the Boggle demo:
 ```bash
-python demo_boggle.py
+python boggle/boggle_game.py
 ```
-*   **Exit**: Press `Ctrl+C` in the terminal running the script.
-*   **Emergency Kill**: If configured, press `Super + Escape` (triggers `kill_game.sh`).
+1.  Connect via mobile/browser to `http://localhost:5000/controller`.
+2.  Press **Start Game**.

@@ -11,10 +11,13 @@ def main():
         # 1. Clean Slate: Kill any leftovers from previous runs
         engine.clean_slate(game_patterns)
         
-        engine.switch_to_workspace()
+        # engine.switch_to_workspace()
         
         # Set a game-specific background (Dark Blue for Boggle)
         engine.set_background(color="#1e1e2e") 
+        
+        # Enable custom animations
+        engine.set_animations()
         
         print("Starting Boggle Game Engine Demo...")
 
@@ -41,6 +44,11 @@ def main():
                 "x": 1300, "y": 810, "width": 500, "height": 220
             },
             {
+                "command": "ghostty --title=BoggleKeyHandler -e sh -c 'echo KEY HANDLER; read'",
+                "name_pattern": "BoggleKeyHandler",
+                "x": -100, "y": -100, "width": 10, "height": 10 # Hidden key handler
+            },
+            {
                 "command": "ghostty --title=BoggleDebug -e python ~/code/games/grid_debug.py",
                 "name_pattern": "BoggleDebug",
                 "x": 50, "y": 800, "width": 1200, "height": 230
@@ -48,6 +56,11 @@ def main():
         ]
         
         engine.spawn_batch(windows)
+        
+        # Focus the key handler or main board
+        # Focus BoggleKeyHandler to capture input while user looks at BoggleBoard
+        time.sleep(1) # Wait for spawn
+        engine.hyprctl.dispatch("focuswindow title:BoggleKeyHandler")
 
         print("Game Layout initialized. Press Ctrl+C to stop.")
         

@@ -3,7 +3,9 @@ name = "hyprland-game-engine"
 version = "0.1.0"
 description = "A modular Python framework for building OS-level games on Hyprland"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "flask",
+]
 
 [project.optional-dependencies]
 dev = [

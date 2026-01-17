@@ -5,7 +5,7 @@ def main():
     engine = HyprlandEngine(target_workspace=2)
     
     try:
-        engine.switch_to_workspace()
+        # engine.switch_to_workspace()
         
         # Solid background to verify gaps
         engine.set_background(color="#222222") 

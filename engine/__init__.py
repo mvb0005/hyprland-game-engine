@@ -31,6 +31,24 @@ class HyprlandEngine:
     def set_background(self, *args: Any, **kwargs: Any) -> None:
         return self.bg.set(*args, **kwargs)
 
+    def set_animations(self) -> None:
+        """
+        Configure custom bouncy animations for the game.
+        """
+        print("Configuring game animations...")
+        # Define a bouncy bezier curve
+        self.hyprctl.keyword("bezier gameBounce,0.05,0.9,0.1,1.05")
+        # Apply it to the 'windows' animation tree for popin styles
+        self.hyprctl.keyword("animation windows,1,5,gameBounce,popin")
+        self.hyprctl.keyword("animation windowsIn,1,5,gameBounce,popin")
+        self.hyprctl.keyword("animation windowsOut,1,5,gameBounce,popin")
+        
+        # Configure Workspace 2 specifically to disable decorations
+        # This prevents polluting the user's main workspace (WS1)
+        # Syntax: workspace = ID, rules...
+        self.hyprctl.keyword("workspace 2, rounding:false, border:false, shadow:false")
+        self.hyprctl.keyword("workspace 2, gapsin:0, gapsout:0")
+
     def cleanup(self) -> None:
         print("Engine shutting down...")
         self.bg.cleanup()

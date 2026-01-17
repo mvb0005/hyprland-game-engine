@@ -24,6 +24,7 @@
         - [ ] Memory Match (Grid based).
         - [ ] Battleship.
 - [ ] **System Features**
+    - [ ] Force Window Focus: Ensure only one window (that we can monitor) stays focused
     - [ ] **Game Launcher**: A "Start Menu" window to select games.
     - [ ] **Input Handling**: Centralized input controller (sockets?) to route keystrokes to specific windows.
     - [ ] **Dynamic Resizing**: Handle monitor resolution changes gracefully.

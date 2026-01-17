@@ -24,39 +24,61 @@ class BackgroundManager:
             temp_bg = "/tmp/game_bg_generated.png"
             # 1x1 pixel is enough if we scale it, but safer to make it decent size?
             # IMV scales up by default usually.
-            # Make it huge to cover any screen
-            subprocess.run(f"magick -size 3840x2160 xc:\"{color}\" {temp_bg}", shell=True)
+            # Get monitor resolution dynamically
+            width = 2048 # Default
+            height = 1080 # Default
+            try:
+                monitors = self.hyprctl.get_clients() # Wait, get_clients is wrong, need get_monitors logic
+                # self.hyprctl.run("-j monitors") returns the json string
+                import json
+                mon_json = json.loads(self.hyprctl.run("-j monitors"))
+                if mon_json:
+                    # Use the first focused monitor or just the first one
+                    m = mon_json[0]
+                    for x in mon_json:
+                        if x.get('focused'): m = x; break
+                    
+                    # Calculate logical size
+                    scale = m.get('scale', 1)
+                    width = int(m['width'] / scale)
+                    height = int(m['height'] / scale)
+                    print(f"Detected Monitor Resolution: {width}x{height}")
+            except Exception as e:
+                print(f"Error detecting resolution: {e}. Using default 2048x1080")
+
+            # Match monitor aspect ratio and size
+            subprocess.run(f"magick -size {width}x{height} xc:\"{color}\" {temp_bg}", shell=True)
             image_path = temp_bg
             
         cmd = ""
         if image_path:
-            # imv command: imv -f (fullscreen) is not what we want if we want it tiled?
-            # Actually, if we spawn it tiled, it fills the space.
-            # We just need it to open the file.
-            # imv doesn't have a --class flag easily? 
-            # We can use `imv-wayland`? Or just `imv`.
-            # We rely on window rules to catch it.
-            # IMV usually has class "imv". We can't easily change it.
-            # So we must use "class:imv" rule.
-            
-            cmd = f"imv {image_path}"
+            # Use imv with crop scaling to cover the window without black bars
+            cmd = f"imv -s crop {image_path}"
             bg_class = "imv" 
         else:
-            # Fallback to black image if nothing provided
-            subprocess.run(f"magick -size 1920x1080 xc:\"#000000\" /tmp/game_bg_black.png", shell=True)
-            cmd = f"imv /tmp/game_bg_black.png"
+            # Fallback to black image
+            subprocess.run(f"magick -size {width}x{height} xc:\"#000000\" /tmp/game_bg_black.png", shell=True)
+            cmd = f"imv -s crop /tmp/game_bg_black.png"
             bg_class = "imv"
             
         # Atomic spawn using exec [rules]
-        self.hyprctl.keyword(f"workspace {self.workspace},gapsin:0,gapsout:0")
+        # self.hyprctl.keyword(f"workspace {self.workspace},gapsin:0,gapsout:0")
         rules = f"workspace {self.workspace} silent;noanim"
         
         # IMPORTANT: imv might exit if we don't keep it open? 
         # By default imv stays open until closed.
         
-        real_cmd = f"hyprctl dispatch exec \"[{rules}]\" \"{cmd}\""
-        print(f"Direct Spawn (IMV): {real_cmd}")
-        subprocess.run(real_cmd, shell=True)
+        # real_cmd = f"hyprctl dispatch exec \"[{rules}]\" \"{cmd}\""
+        # print(f"Direct Spawn (IMV): {real_cmd}")
+        # subprocess.run(real_cmd, shell=True)
+        
+        # Batch the workspace config and the spawn
+        batch_cmds = [
+            f"keyword workspace {self.workspace},gapsin:0,gapsout:0",
+            f"dispatch exec [{rules}] {cmd}"
+        ]
+        print(f"Batch Spawning Background: {batch_cmds}")
+        self.hyprctl.batch(batch_cmds)
         
         time.sleep(0.5)
         
@@ -93,34 +115,19 @@ class BackgroundManager:
             # Let's hardcode 1920x1080 for the demo as used elsewhere.
             # UPDATE: User reported it doesn't go to the right edge.
             # We likely have a wider monitor (2560x1080 or 1440p?).
-            # Let's set it to something huge to be safe, or 2560.
+            # Set to exact logical resolution of the monitor
+            # width = 2048
+            # height = 1080
+            # We already calculated width/height above, use those variables
             
-            width = 2560
-            height = 1440 
-            
-            self.hyprctl.dispatch(f"resizeactive exact {width} {height} address:{self.address}")
-            self.hyprctl.dispatch(f"moveactive exact 0 0 address:{self.address}")
-            
-            # Use 'alterzorder' to push it to the bottom?
-            # 'dispatch alterzorder bottom,address:X'
-            self.hyprctl.dispatch(f"alterzorder bottom,address:{self.address}")
-            
-            # If we can't tile it, we just accept it's a floating window at the back.
-            # The danger is if the user clicks it, it might obscure others.
-            # But we can set 'xray 1'? No.
-            
-            # Actually, let's try 'pin' ? No, pin makes it show on all workspaces.
-            
-            # Best bet for "floating background":
-            # 1. Fullscreen it (this usually keeps it below other floating windows if they are focused?)
-            #    No, fullscreen takes over.
-            # 2. Maximize (Fullscreen 1) - keeps bars visible (we have none) and allows other floating windows on top?
-            #    Let's try Fullscreen 1 (Maximize) again, but ensuring we push it to bottom first.
-            
-            self.hyprctl.dispatch(f"fullscreen 1 address:{self.address}")
-            
-            # Re-apply z-order push just in case
-            self.hyprctl.dispatch(f"alterzorder bottom,address:{self.address}")
+            self.hyprctl.batch([
+                f"dispatch resizewindowpixel exact {width} {height},address:{self.address}",
+                f"dispatch movewindowpixel exact 0 0,address:{self.address}",
+                f"dispatch focuswindow address:{self.address}",
+                "dispatch alterzorder bottom",
+                "dispatch fullscreen 1",
+                "dispatch alterzorder bottom"
+            ])
             
     def cleanup(self) -> None:
         if self.process:
