@@ -11,32 +11,38 @@ The game will run within the Hyprland Game Engine environment.
 -   **Integration**:
     -   Run as a "Game" within the `engine` framework.
     -   Use `engine` to spawn the window.
-    -   (Optional) Support the existing Mobile Controller via Flask/WebSockets if needed, or potentially a pure TUI version where keyboard is used.
+    -   **Mobile Controller**: The game MUST support the existing web-based mobile controller. The Python server will serve the static files for the controller and handle WebSocket events from it.
 
 ## 3. Requirements
 
 ### 3.1. Game Mode
-For this iteration, we focus on a **Single Player** or **Hotseat** TUI version first, or a "Server View" that displays the board.
+For this iteration, we focus on a **Hybrid Mode**:
+-   **TV/Server View**: A TUI window running on the host (Hyprland).
+-   **Controller**: Players use their phones (web browser) to input moves.
 
 ### 3.2. Core Components
 1.  **LexigraphGame**: A Python class inheriting from/similar to `BoggleGame` but with Lexigraph rules (Territory Control).
-2.  **LexigraphServer**: A Flask/SocketIO server (like `boggle/server.py`) to handle the game state and potentially serve the mobile controller.
-3.  **LexigraphTUI**: A TUI implementation that connects to the server (or runs locally) and visualizes the grid.
+2.  **LexigraphServer**: A Flask/SocketIO server (like `boggle/server.py`) to handle the game state and serve the mobile controller files.
+3.  **LexigraphTUI**: A TUI implementation that renders the grid state.
 
 ### 3.3. TUI Visuals (Omarchy Style)
 -   **Grid**: Displayed using ASCII/Unicode block characters or colored text.
 -   **Colors**: Use ANSI color codes or a library like `rich` / `textual` to represent player ownership (Neon colors).
 -   **Responsiveness**: The TUI should resize gracefully.
+-   **Updates**: The TUI must update in real-time as players make moves on their phones.
 
 ## 4. Implementation Plan
 1.  **Port Game Logic**: Translate `lexigraph/src/server/game/*.ts` logic (Grid, Player, Move Validation) to Python.
-2.  **Create TUI**: Build `lexigraph_tui.py` to render the grid.
-3.  **Integrate with Engine**: Ensure it can be launched via `python games/lexigraph/main.py` (or similar).
+2.  **Migrate Controller**: Copy/move the frontend controller code from `lexigraph/src/controller` to a location servable by the Python app (e.g., `lexigraph_py/static/controller`).
+3.  **Create Server**: Implement `lexigraph_py/server.py` using Flask-SocketIO to serve the controller and handle events.
+4.  **Create TUI**: Build `lexigraph_py/tui.py` to render the grid, consuming state from the server/game instance.
+5.  **Integrate with Engine**: Ensure it can be launched via `python games/lexigraph/main.py` (or similar).
 
 ## 5. Workflow Constraints
--   Do not modify the existing `lexigraph/` TypeScript code unless deleting it/replacing it entirely is the goal. (We will likely create a `lexigraph_python/` or use `lexigraph/` if we decide to replace the JS version).
--   **Decision**: We will create a new directory `lexigraph_py/` for the Python implementation to avoid confusion with the Node.js version during migration.
+-   **Legacy Code**: The existing `lexigraph/` folder contains the TypeScript implementation. We will treat `lexigraph/src/controller` as the source of truth for the frontend code, but migrate the backend logic to Python.
+-   **Decision**: We will create a new directory `lexigraph_py/` for the Python implementation.
 
 ## 6. Testing
 -   Unit tests for Python Game Logic (Grid, Scoring).
 -   Integration test ensuring TUI can launch.
+-   Verification that the mobile controller can connect to the Python server.
