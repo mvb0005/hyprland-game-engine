@@ -1,0 +1,41 @@
+/* Shared Global Styles */
+:root {
+  --bg-color: #1e1e2e;
+  --text-color: #cdd6f4;
+  --accent-color: #f38ba8;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
+}
+
+@keyframes popIn {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.05); }
+}
+
+@keyframes fadeOut {
+  0% { transform: scale(1.05); background: #f9e2af; color: #1e1e2e; }
+  100% { transform: scale(1); background: #313244; color: #cdd6f4; }
+}
+
+.grid-cell {
+  /* removed transition to prevent conflict with animation */
+}
+
+.grid-cell.selected {
+  animation: popIn 0.2s ease-out forwards;
+  background: #f9e2af !important;
+  color: #1e1e2e !important;
+  box-shadow: 0 0 15px rgba(249, 226, 175, 0.4);
+  z-index: 10;
+}
+
+.grid-cell.deselected {
+  animation: fadeOut 0.3s ease-out forwards;
+}
